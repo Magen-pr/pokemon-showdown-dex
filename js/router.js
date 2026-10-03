@@ -24,4 +24,4 @@ var Pokedex = Panels.App.extend({
 		}
 	}
 });
-var pokedex = new Pokedex();
+var pokedex = new Pokedex({root: Game.root});

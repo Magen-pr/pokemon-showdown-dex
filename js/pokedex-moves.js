@@ -14,13 +14,13 @@ var PokedexMovePanel = PokedexResultPanel.extend({
 
 		var buf = '<div class="pfx-body dexentry">';
 
-		buf += '<a href="/" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
-		buf += '<h1><a href="/moves/'+id+'" data-target="push" class="subtle">'+Dex.escapeHTML(Names.move(move))+'</a></h1>';
+		buf += '<a href="'+Game.root+'" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
+		buf += '<h1><a href="'+Game.root+'moves/'+id+'" data-target="push" class="subtle">'+Dex.escapeHTML(Names.move(move))+'</a></h1>';
 
 		buf += '<dl class="movetypeentry">';
 		buf += '<dt>Tipo:</dt> <dd>';
-		buf += '<a class="type '+toID(move.type)+'" href="/types/'+toID(move.type)+'" data-target="push">'+Names.type(move.type)+'</a> ';
-		buf += '<a class="type '+toID(move.category)+'" href="/categories/'+toID(move.category)+'" data-target="push">'+Names.category(move.category)+'</a>';
+		buf += '<a class="type '+toID(move.type)+'" href="'+Game.root+'types/'+toID(move.type)+'" data-target="push">'+Names.type(move.type)+'</a> ';
+		buf += '<a class="type '+toID(move.category)+'" href="'+Game.root+'categories/'+toID(move.category)+'" data-target="push">'+Names.category(move.category)+'</a>';
 		buf += '</dd></dl>';
 
 		if (move.category !== 'Status') {
@@ -44,47 +44,47 @@ var PokedexMovePanel = PokedexResultPanel.extend({
 			buf += '<p>Si el usuario est&aacute; congelado, se descongela.</p>';
 		}
 		if (!('protect' in move.flags) && move.target !== 'self') {
-			buf += '<p class="movetag"><a href="/tags/bypassprotect" data-target="push">Ignora Protecci&oacute;n</a> <small>(ignora ' + effectLinks('moves', ['protect', 'detect', 'kingsshield', 'spikyshield'], 'subtle') + ')</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/bypassprotect" data-target="push">Ignora Protecci&oacute;n</a> <small>(ignora ' + effectLinks('moves', ['protect', 'detect', 'kingsshield', 'spikyshield'], 'subtle') + ')</small></p>';
 		}
 		if ('bypasssub' in move.flags) {
-			buf += '<p class="movetag"><a href="/tags/bypasssub" data-target="push">Ignora Sustituto</a> <small>(atraviesa un ' + effectLink('moves', 'substitute', 'subtle') + ' sin romperlo)</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/bypasssub" data-target="push">Ignora Sustituto</a> <small>(atraviesa un ' + effectLink('moves', 'substitute', 'subtle') + ' sin romperlo)</small></p>';
 		}
 		if (!('reflectable' in move.flags) && move.target !== 'self' && move.category === 'Status') {
-			buf += '<p class="movetag"><a href="/tags/nonreflectable" data-target="push">&#x2713; No reflejable</a> <small>(no lo devuelven ' + effectLink('moves', 'magiccoat', 'subtle') + ' ni ' + effectLink('abilities', 'magicbounce', 'subtle') + ')</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/nonreflectable" data-target="push">&#x2713; No reflejable</a> <small>(no lo devuelven ' + effectLink('moves', 'magiccoat', 'subtle') + ' ni ' + effectLink('abilities', 'magicbounce', 'subtle') + ')</small></p>';
 		}
 		if (!('mirror' in move.flags) && move.target !== 'self') {
-			buf += '<p class="movetag"><a href="/tags/nonmirror" data-target="push">&#x2713; No copiable</a> <small>(' + effectLink('moves', 'mirrormove', 'subtle') + ' no puede copiarlo)</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/nonmirror" data-target="push">&#x2713; No copiable</a> <small>(' + effectLink('moves', 'mirrormove', 'subtle') + ' no puede copiarlo)</small></p>';
 		}
 		if (!('snatch' in move.flags) && (move.target === 'self' || move.target === 'allyTeam' || move.target === 'adjacentAllyOrSelf')) {
-			buf += '<p class="movetag"><a href="/tags/nonsnatchable" data-target="push">&#x2713; No robable</a> <small>(' + effectLink('moves', 'snatch', 'subtle') + ' no puede robarlo)</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/nonsnatchable" data-target="push">&#x2713; No robable</a> <small>(' + effectLink('moves', 'snatch', 'subtle') + ' no puede robarlo)</small></p>';
 		}
 
 		if ('contact' in move.flags) {
-			buf += '<p class="movetag"><a href="/tags/contact" data-target="push">&#x2713; Contacto</a> <small>(interact&uacute;a con habilidades como ' + effectLink('abilities', 'ironbarbs', 'subtle') + ' y movimientos como ' + effectLink('moves', 'spikyshield', 'subtle') + ')</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/contact" data-target="push">&#x2713; Contacto</a> <small>(interact&uacute;a con habilidades como ' + effectLink('abilities', 'ironbarbs', 'subtle') + ' y movimientos como ' + effectLink('moves', 'spikyshield', 'subtle') + ')</small></p>';
 		}
 		if ('sound' in move.flags) {
-			buf += '<p class="movetag"><a href="/tags/sound" data-target="push">&#x2713; Sonido</a> <small>(ignora ' + effectLink('moves', 'substitute', 'subtle') + ', no afecta a los Pok&eacute;mon con ' + effectLink('abilities', 'soundproof', 'subtle') + ')</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/sound" data-target="push">&#x2713; Sonido</a> <small>(ignora ' + effectLink('moves', 'substitute', 'subtle') + ', no afecta a los Pok&eacute;mon con ' + effectLink('abilities', 'soundproof', 'subtle') + ')</small></p>';
 		}
 		if ('powder' in move.flags) {
-			buf += '<p class="movetag"><a href="/tags/powder" data-target="push">&#x2713; Polvo</a> <small>(no afecta al tipo <a class="subtle" href="/types/grass" data-target="push">' + Names.type('Grass') + '</a>, a los Pok&eacute;mon con ' + effectLink('abilities', 'overcoat', 'subtle') + ' ni a los que llevan ' + effectLink('items', 'safetygoggles', 'subtle') + ')</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/powder" data-target="push">&#x2713; Polvo</a> <small>(no afecta al tipo <a class="subtle" href="'+Game.root+'types/grass" data-target="push">' + Names.type('Grass') + '</a>, a los Pok&eacute;mon con ' + effectLink('abilities', 'overcoat', 'subtle') + ' ni a los que llevan ' + effectLink('items', 'safetygoggles', 'subtle') + ')</small></p>';
 		}
 		if ('punch' in move.flags) {
-			buf += '<p class="movetag"><a href="/tags/fist" data-target="push">&#x2713; Pu&ntilde;o</a> <small>(lo potencia ' + effectLink('abilities', 'ironfist', 'subtle') + ')</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/fist" data-target="push">&#x2713; Pu&ntilde;o</a> <small>(lo potencia ' + effectLink('abilities', 'ironfist', 'subtle') + ')</small></p>';
 		}
 		if ('pulse' in move.flags) {
-			buf += '<p class="movetag"><a href="/tags/pulse" data-target="push">&#x2713; Pulso</a> <small>(lo potencia ' + effectLink('abilities', 'megalauncher', 'subtle') + ')</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/pulse" data-target="push">&#x2713; Pulso</a> <small>(lo potencia ' + effectLink('abilities', 'megalauncher', 'subtle') + ')</small></p>';
 		}
 		if ('bite' in move.flags) {
-			buf += '<p class="movetag"><a href="/tags/bite" data-target="push">&#x2713; Mordisco</a> <small>(lo potencia ' + effectLink('abilities', 'strongjaw', 'subtle') + ')</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/bite" data-target="push">&#x2713; Mordisco</a> <small>(lo potencia ' + effectLink('abilities', 'strongjaw', 'subtle') + ')</small></p>';
 		}
 		if ('bullet' in move.flags) {
-			buf += '<p class="movetag"><a href="/tags/ballistic" data-target="push">&#x2713; Bal&iacute;stico</a> <small>(no afecta a los Pok&eacute;mon con ' + effectLink('abilities', 'bulletproof', 'subtle') + ')</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/ballistic" data-target="push">&#x2713; Bal&iacute;stico</a> <small>(no afecta a los Pok&eacute;mon con ' + effectLink('abilities', 'bulletproof', 'subtle') + ')</small></p>';
 		}
 		if ('slicing' in move.flags) {
-			buf += '<p class="movetag"><a href="/tags/slicing" data-target="push">&#x2713; Corte</a> <small>(lo potencia ' + effectLink('abilities', 'sharpness', 'subtle') + ')</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/slicing" data-target="push">&#x2713; Corte</a> <small>(lo potencia ' + effectLink('abilities', 'sharpness', 'subtle') + ')</small></p>';
 		}
 		if ('wind' in move.flags) {
-			buf += '<p class="movetag"><a href="/tags/wind" data-target="push">&#x2713; Viento</a> <small>(interact&uacute;a con ' + effectLink('abilities', 'windpower', 'subtle') + ' y ' + effectLink('abilities', 'windrider', 'subtle') + ')</small></p>';
+			buf += '<p class="movetag"><a href="'+Game.root+'tags/wind" data-target="push">&#x2713; Viento</a> <small>(interact&uacute;a con ' + effectLink('abilities', 'windpower', 'subtle') + ' y ' + effectLink('abilities', 'windrider', 'subtle') + ')</small></p>';
 		}
 
 		if (move.target === 'allAdjacent') {
@@ -153,7 +153,7 @@ var PokedexMovePanel = PokedexResultPanel.extend({
 							if (eg1 === breeder.eggGroups[0] || eg1 === breeder.eggGroups[1] ||
 								(eg2 && (eg2 === breeder.eggGroups[0] || eg2 === breeder.eggGroups[1]))) {
 								if (hasBreeders) buf += ', ';
-								buf += '<a href="/pokemon/' + breederid + '" data-target="push">' + Dex.escapeHTML(Names.species(breeder)) + '</a>';
+								buf += '<a href="'+Game.root+'pokemon/' + breederid + '" data-target="push">' + Dex.escapeHTML(Names.species(breeder)) + '</a>';
 								hasBreeders = true;
 							}
 						}

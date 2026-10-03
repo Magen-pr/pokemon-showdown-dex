@@ -491,3 +491,18 @@ a.subtle:hover {
 .tabbar .button.nav-last {
 	border-top-right-radius: 5px;
 }
+
+.nav select.button {
+	height: 30px;
+	padding: 4px 6px;
+	margin: -6px -1px 0 0;
+	vertical-align: top;
+	font-size: 10pt;
+	border-radius: 0;
+	cursor: pointer;
+}
+@media (max-width:520px) {
+	.header .nav {
+		padding-left: 0;
+	}
+}

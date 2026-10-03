@@ -26,7 +26,7 @@ var PokedexSearchPanel = Panels.Panel.extend({
 		var $oldSearchbox = this.$('.searchbox');
 		var oldSelectionStart = $oldSearchbox[0] && $oldSearchbox[0].selectionStart || 0;
 		var oldSelectionEnd = $oldSearchbox[0] && $oldSearchbox[0].selectionEnd || 0;
-		buf += '<h1><a href="/" data-target="replace">Pok&eacute;dex</a></h1>';
+		buf += '<h1><a href="'+Game.root+'" data-target="replace">Pok&eacute;dex</a></h1>';
 		buf += '<ul class="tabbar centered" style="margin-bottom: 18px"><li><button class="button nav-first' + (fragment === '' ? ' cur' : '') + '" value="">Buscar</button></li>';
 		buf += '<li><button class="button' + (fragment === 'pokemon/' ? ' cur' : '') + '" value="pokemon/">Pok&eacute;mon</button></li>';
 		buf += '<li><button class="button nav-last' + (fragment === 'moves/' ? ' cur' : '') + '" value="moves/">Movimientos</button></li></ul>';
@@ -142,7 +142,7 @@ var PokedexSearchPanel = Panels.Panel.extend({
 				return;
 			}
 			if (this.activeLink) {
-				var path = this.activeLink.pathname.substr(1);
+				var path = this.activeLink.pathname.slice(Game.root.length);
 				if (path === 'moves/' || path === 'pokemon/') {
 					this.app.go(path, this, true);
 					return;

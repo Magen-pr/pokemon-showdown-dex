@@ -1,17 +1,16 @@
 /**
- * Pokémon Añil: the dex shows the gen9anil mod (data/anil.js) in Spanish,
- * using the client's text files.
+ * The dex shows the game's mod (data/<game>.js) in Spanish, using the
+ * client's text files.
  */
 
-var ANIL_FORMAT = 'gen9ailsingles';
-var AnilDex = Dex.mod('gen9anil');
+var GameDex = Dex.mod(Game.mod);
 
 Dex.text.getLanguage = function () {
 	return 'es';
 };
 Dex.loadTextData('es');
 // the game's names and descriptions win over the official ones
-Dex.text.get = AnilDex.text.get;
+Dex.text.get = GameDex.text.get;
 
 var Names = {
 	species: function (species) {

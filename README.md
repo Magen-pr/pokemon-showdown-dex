@@ -7,14 +7,14 @@ Navigation: [Website][1] | [Server repository][2] | [Client repository][3] | **D
   [2]: https://github.com/Zarel/Pokemon-Showdown
   [3]: https://github.com/Zarel/Pokemon-Showdown-Client
 
-Pokémon Añil
+Fangames Battles
 ------------------------------------------------------------------------
 
-Esta rama es la Pokédex de [Fangames Battles](https://fangamesbattles.com): solo lo que existe en Pokémon Añil (el mod `gen9anil` del servidor) y en español.
+Esta rama es la Pokédex de [Fangames Battles](https://fangamesbattles.com), en español. Cada juego tiene su mod en el servidor y se elige arriba; la URL lleva el juego (`/anil/pokemon/cefireon`) y los enlaces sin él van al juego por defecto. Los juegos están en `games.json`.
 
     node build
 
-genera `data/anil.js` a partir del servidor ya compilado (`serverDir` en `config/config.js`) y escribe `index.html`. `data/anil-game.js` (categoría, entrada de la Pokédex y método de evolución de cada especie) sale de los datos del juego.
+genera `data/<juego>.js` a partir del servidor ya compilado (`serverDir` en `config/config.js`) y escribe `index.html`. `data/<juego>-game.js` (categoría, entrada de la Pokédex y método de evolución de cada especie) sale de los datos del juego.
 
 Introduction
 ------------------------------------------------------------------------

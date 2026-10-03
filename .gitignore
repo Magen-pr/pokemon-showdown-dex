@@ -1,6 +1,7 @@
 /index.php
 /index.html
-/data/anil.js
+/data/*.js
+!/data/*-game.js
 /.articles-cached
 /config/config.js
 node_modules

@@ -1,10 +1,10 @@
 /**
  * Search
  *
- * The client's oldclient/search.js, for the Añil dex: Spanish names, the
- * gen9anil format for typed searches, no tiers and no articles.
+ * The client's oldclient/search.js, for our dex: Spanish names, the game's
+ * format for typed searches, no tiers and no articles.
  *
- * Dependencies: jQuery, battledata, search-index, anil
+ * Dependencies: jQuery, battledata, search-index, game
  *
  * @author Guangcong Luo <guangcongluo@gmail.com>
  */
@@ -185,7 +185,7 @@
 	};
 	Search.prototype.setType = function (qType, cur) {
 		this.qType = qType;
-		this.engine.setType(qType, ANIL_FORMAT);
+		this.engine.setType(qType, Game.format);
 		this.filters = this.engine.filters;
 		this.sortCol = this.engine.sortCol;
 		this.cur = cur || {};
@@ -197,7 +197,7 @@
 				var results = this.getDefaultResults();
 				for (var i = 0; i < results.length; i++) {
 					if (results[i][0] === 'pokemon' && Dex.species.get(results[i][1]).num > 1025) {
-						results.splice(i, 0, ['header', 'Pokémon Añil']);
+						results.splice(i, 0, ['header', 'Nuevos en ' + Game.name]);
 						break;
 					}
 				}

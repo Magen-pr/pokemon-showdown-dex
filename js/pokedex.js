@@ -1,4 +1,4 @@
-BattleSearch.urlRoot = '/';
+BattleSearch.urlRoot = Game.root;
 
 Dex.escapeHTML = function (str, jsEscapeToo) {
 	str = String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -8,7 +8,7 @@ Dex.escapeHTML = function (str, jsEscapeToo) {
 
 function effectLink(type, id, className) {
 	var name = type === 'moves' ? Names.move(id) : type === 'abilities' ? Names.ability(id) : Names.item(id);
-	return '<a' + (className ? ' class="' + className + '"' : '') + ' href="/' + type + '/' + id + '" data-target="push">' + Dex.escapeHTML(name) + '</a>';
+	return '<a' + (className ? ' class="' + className + '"' : '') + ' href="' + Game.root + type + '/' + id + '" data-target="push">' + Dex.escapeHTML(name) + '</a>';
 }
 function effectLinks(type, ids, className) {
 	var links = ids.map(function (id) {
@@ -36,8 +36,8 @@ var PokedexItemPanel = PokedexResultPanel.extend({
 		this.shortTitle = Names.item(item);
 
 		var buf = '<div class="pfx-body dexentry">';
-		buf += '<a href="/" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
-		buf += '<h1><span class="itemicon" style="'+Dex.getItemIcon(item)+'"></span> <a href="/items/'+id+'" data-target="push" class="subtle">'+Dex.escapeHTML(Names.item(item))+'</a></h1>';
+		buf += '<a href="'+Game.root+'" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
+		buf += '<h1><span class="itemicon" style="'+Dex.getItemIcon(item)+'"></span> <a href="'+Game.root+'items/'+id+'" data-target="push" class="subtle">'+Dex.escapeHTML(Names.item(item))+'</a></h1>';
 		buf += '<p>'+Dex.escapeHTML(Names.desc(item))+'</p>';
 
 		var users = [];
@@ -66,8 +66,8 @@ var PokedexAbilityPanel = PokedexResultPanel.extend({
 		this.shortTitle = Names.ability(ability);
 
 		var buf = '<div class="pfx-body dexentry">';
-		buf += '<a href="/" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
-		buf += '<h1><a href="/abilities/'+id+'" data-target="push" class="subtle">'+Dex.escapeHTML(Names.ability(ability))+'</a></h1>';
+		buf += '<a href="'+Game.root+'" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
+		buf += '<h1><a href="'+Game.root+'abilities/'+id+'" data-target="push" class="subtle">'+Dex.escapeHTML(Names.ability(ability))+'</a></h1>';
 
 		buf += '<p>'+Dex.escapeHTML(Names.desc(ability))+'</p>';
 
@@ -103,15 +103,15 @@ var PokedexTypePanel = PokedexResultPanel.extend({
 		this.shortTitle = Names.type(this.type);
 
 		var buf = '<div class="pfx-body dexentry">';
-		buf += '<a href="/" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
-		buf += '<h1><a href="/types/'+id+'" data-target="push" class="subtle">'+Names.type(this.type)+'</a></h1>';
+		buf += '<a href="'+Game.root+'" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
+		buf += '<h1><a href="'+Game.root+'types/'+id+'" data-target="push" class="subtle">'+Names.type(this.type)+'</a></h1>';
 		buf += '<dl>';
 		var atLeastOne = false;
 
 		buf += '<dt>Debilidades:</dt> <dd>';
 		for (var attackType in type.damageTaken) {
 			if (type.damageTaken[attackType] == 1) {
-				buf += '<a href="/types/'+toID(attackType)+'" data-target="push">'+Dex.getTypeIcon(attackType)+'</a> ';
+				buf += '<a href="'+Game.root+'types/'+toID(attackType)+'" data-target="push">'+Dex.getTypeIcon(attackType)+'</a> ';
 				atLeastOne = true;
 			}
 		}
@@ -124,7 +124,7 @@ var PokedexTypePanel = PokedexResultPanel.extend({
 		atLeastOne = false;
 		for (var attackType in type.damageTaken) {
 			if (type.damageTaken[attackType] == 2) {
-				buf += '<a href="/types/'+toID(attackType)+'" data-target="push">'+Dex.getTypeIcon(attackType)+'</a> ';
+				buf += '<a href="'+Game.root+'types/'+toID(attackType)+'" data-target="push">'+Dex.getTypeIcon(attackType)+'</a> ';
 				atLeastOne = true;
 			}
 		}
@@ -140,13 +140,13 @@ var PokedexTypePanel = PokedexResultPanel.extend({
 				if (attackType === attackType.toLowerCase()) {
 					switch (attackType) {
 					case 'hail':
-						buf += '<div><small>Da&ntilde;o de <a href="/moves/hail" data-target="push">'+Names.move('hail')+'</a></small></div>';
+						buf += '<div><small>Da&ntilde;o de <a href="'+Game.root+'moves/hail" data-target="push">'+Names.move('hail')+'</a></small></div>';
 						break;
 					case 'sandstorm':
-						buf += '<div><small>Da&ntilde;o de <a href="/moves/sandstorm" data-target="push">'+Names.move('sandstorm')+'</a></small></div>';
+						buf += '<div><small>Da&ntilde;o de <a href="'+Game.root+'moves/sandstorm" data-target="push">'+Names.move('sandstorm')+'</a></small></div>';
 						break;
 					case 'powder':
-						buf += '<div><small><a href="/tags/powder" data-target="push">Movimientos de polvo</a></small></div>';
+						buf += '<div><small><a href="'+Game.root+'tags/powder" data-target="push">Movimientos de polvo</a></small></div>';
 						break;
 					case 'frz':
 						buf += '<div><small>Congelaci&oacute;n</small></div>';
@@ -164,7 +164,7 @@ var PokedexTypePanel = PokedexResultPanel.extend({
 					if (!atLeastOne) atLeastOne = null;
 					continue;
 				}
-				buf += '<a href="/types/'+toID(attackType)+'" data-target="push">'+Dex.getTypeIcon(attackType)+'</a> ';
+				buf += '<a href="'+Game.root+'types/'+toID(attackType)+'" data-target="push">'+Dex.getTypeIcon(attackType)+'</a> ';
 				atLeastOne = true;
 			}
 		}
@@ -266,7 +266,7 @@ var PokedexTagPanel = PokedexResultPanel.extend({
 		powder: {
 			name: 'Polvo',
 			tag: 'powder',
-			desc: 'No afecta a los Pok&eacute;mon de tipo <a href="/types/grass" data-target="push">' + Names.type('Grass') + '</a>, a los que tienen ' + effectLink('abilities', 'overcoat') + ' ni a los que llevan ' + effectLink('items', 'safetygoggles') + '.'
+			desc: 'No afecta a los Pok&eacute;mon de tipo <a href="'+Game.root+'types/grass" data-target="push">' + Names.type('Grass') + '</a>, a los que tienen ' + effectLink('abilities', 'overcoat') + ' ni a los que llevan ' + effectLink('items', 'safetygoggles') + '.'
 		},
 		fist: {
 			name: 'Pu&ntilde;o',
@@ -333,8 +333,8 @@ var PokedexTagPanel = PokedexResultPanel.extend({
 
 		var buf = '<div class="pfx-body dexentry">';
 
-		buf += '<a href="/" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
-		buf += '<h1><a href="/tags/'+id+'" data-target="push" class="subtle">'+name+'</a></h1>';
+		buf += '<a href="'+Game.root+'" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
+		buf += '<h1><a href="'+Game.root+'tags/'+id+'" data-target="push" class="subtle">'+name+'</a></h1>';
 
 		if (tag) buf += '<p>'+tag.desc+'</p>';
 
@@ -523,11 +523,11 @@ var PokedexEggGroupPanel = PokedexResultPanel.extend({
 
 		var buf = '<div class="pfx-body dexentry">';
 
-		buf += '<a href="/" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
-		buf += '<h1><a href="/egggroups/'+id+'" data-target="push" class="subtle">'+names+'</a></h1>';
+		buf += '<a href="'+Game.root+'" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
+		buf += '<h1><a href="'+Game.root+'egggroups/'+id+'" data-target="push" class="subtle">'+names+'</a></h1>';
 
 		if (this.id2) {
-			buf += '<p>Todos los Pok&eacute;mon de los grupos huevo <a href="/egggroups/'+this.id+'" data-target="push">'+Names.eggGroup(this.table[ids[0]])+'</a> o <a href="/egggroups/'+this.id2+'" data-target="push">'+Names.eggGroup(this.table[ids[1]])+'</a>.</p>';
+			buf += '<p>Todos los Pok&eacute;mon de los grupos huevo <a href="'+Game.root+'egggroups/'+this.id+'" data-target="push">'+Names.eggGroup(this.table[ids[0]])+'</a> o <a href="'+Game.root+'egggroups/'+this.id2+'" data-target="push">'+Names.eggGroup(this.table[ids[1]])+'</a>.</p>';
 		} else if (this.descs[ids[0]]) {
 			buf += '<p>'+this.descs[ids[0]]+'</p>';
 		}
@@ -670,8 +670,8 @@ var PokedexCategoryPanel = PokedexResultPanel.extend({
 		this.shortTitle = name;
 
 		var buf = '<div class="pfx-body dexentry">';
-		buf += '<a href="/" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
-		buf += '<h1><a href="/categories/'+id+'" data-target="push" class="subtle">'+name+'</a></h1>';
+		buf += '<a href="'+Game.root+'" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
+		buf += '<h1><a href="'+Game.root+'categories/'+id+'" data-target="push" class="subtle">'+name+'</a></h1>';
 		switch (id) {
 		case 'physical':
 			buf += '<p>Los movimientos f&iacute;sicos hacen da&ntilde;o que normalmente depende del Ataque del usuario y de la Defensa del objetivo.</p>';

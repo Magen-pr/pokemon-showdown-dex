@@ -1,0 +1,6 @@
+{
+	"default": "anil",
+	"games": {
+		"anil": {"name": "Pokémon Añil", "mod": "gen9anil", "format": "gen9ailsingles"}
+	}
+}

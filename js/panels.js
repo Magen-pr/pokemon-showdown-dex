@@ -61,7 +61,7 @@ if (!Function.prototype.bind) {
 			if (!options) options = {};
 			if (options.root) this.root = options.root;
 			if ((location.search || '').substr(0, 4) === '?_ga' && window.history) {
-				history.replaceState(null, null, '/');
+				history.replaceState(null, null, this.root);
 			}
 			for (var i in this.states) {
 				this.routePanel(i, this.states[i]);
