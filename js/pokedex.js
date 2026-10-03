@@ -6,6 +6,17 @@ Dex.escapeHTML = function (str, jsEscapeToo) {
 	return str;
 };
 
+function effectLink(type, id, className) {
+	var name = type === 'moves' ? Names.move(id) : type === 'abilities' ? Names.ability(id) : Names.item(id);
+	return '<a' + (className ? ' class="' + className + '"' : '') + ' href="/' + type + '/' + id + '" data-target="push">' + Dex.escapeHTML(name) + '</a>';
+}
+function effectLinks(type, ids, className) {
+	var links = ids.map(function (id) {
+		return effectLink(type, id, className);
+	});
+	return links.length > 1 ? links.slice(0, -1).join(', ') + ' y ' + links[links.length - 1] : links.join('');
+}
+
 var Topbar = Panels.Topbar.extend({
 	height: 51
 });
@@ -14,7 +25,7 @@ var PokedexResultPanel = Panels.Panel.extend({
 	minWidth: 639,
 	maxWidth: 639,
 	initialize: function() {
-		this.html('not found: '+Array.prototype.join.call(arguments,' || '));
+		this.html('No encontrado: '+Array.prototype.join.call(arguments,' || '));
 	}
 });
 
@@ -22,32 +33,25 @@ var PokedexItemPanel = PokedexResultPanel.extend({
 	initialize: function(id) {
 		id = toID(id);
 		var item = Dex.items.get(id);
-		this.shortTitle = item.name;
+		this.shortTitle = Names.item(item);
 
 		var buf = '<div class="pfx-body dexentry">';
 		buf += '<a href="/" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
-		buf += '<h1><span class="itemicon" style="'+Dex.getItemIcon(item)+'"></span> <a href="/items/'+id+'" data-target="push" class="subtle">'+item.name+'</a></h1>';
-		buf += '<p>'+Dex.escapeHTML(item.desc||item.shortDesc)+'</p>';
+		buf += '<h1><span class="itemicon" style="'+Dex.getItemIcon(item)+'"></span> <a href="/items/'+id+'" data-target="push" class="subtle">'+Dex.escapeHTML(Names.item(item))+'</a></h1>';
+		buf += '<p>'+Dex.escapeHTML(Names.desc(item))+'</p>';
 
-		// past gens
-		var pastGenChanges = false;
-		for (var genNum = Dex.gen - 1; genNum >= item.gen; genNum--) {
-			var nextGenItem = Dex.forGen(genNum + 1).items.get(id);
-			var curGenItem = Dex.forGen(genNum).items.get(id);
-			var changes = '';
-
-			if (curGenItem.shortDesc !== nextGenItem.shortDesc) {
-				changes += curGenItem.shortDesc + ' <i class="fa fa-long-arrow-right"></i> ' + nextGenItem.shortDesc + '<br />';
+		var users = [];
+		if (item.megaEvolves) users.push(item.megaStone);
+		if (item.itemUser) users = users.concat(item.itemUser);
+		if (users.length) {
+			buf += '<h3>Pok&eacute;mon</h3>';
+			buf += '<ul class="utilichart nokbd">';
+			for (var i = 0; i < users.length; i++) {
+				var pokemon = Dex.species.get(users[i]);
+				if (pokemon.exists) buf += BattleSearch.renderPokemonRow(pokemon);
 			}
-
-			if (changes) {
-				if (!pastGenChanges) buf += '<h3>Past gens</h3><dl>';
-				buf += '<dt>Gen ' + genNum + ' <i class="fa fa-arrow-right"></i> ' + (genNum + 1) + ':</dt>';
-				buf += '<dd>' + changes + '</dd>';
-				pastGenChanges = true;
-			}
+			buf += '</ul>';
 		}
-		if (pastGenChanges) buf += '</dl>';
 
 		buf += '</div>';
 
@@ -59,40 +63,18 @@ var PokedexAbilityPanel = PokedexResultPanel.extend({
 		id = toID(id);
 		var ability = Dex.abilities.get(id);
 		this.id = id;
-		this.shortTitle = ability.name;
+		this.shortTitle = Names.ability(ability);
 
 		var buf = '<div class="pfx-body dexentry">';
 		buf += '<a href="/" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
-		buf += '<h1><a href="/abilities/'+id+'" data-target="push" class="subtle">'+ability.name+'</a></h1>';
+		buf += '<h1><a href="/abilities/'+id+'" data-target="push" class="subtle">'+Dex.escapeHTML(Names.ability(ability))+'</a></h1>';
 
-		if (ability.isNonstandard && ability.id !== 'noability') buf += '<div class="warning">A <strong>made-up</strong> ability by <a href="http://www.smogon.com/cap/" target="_blank">Smogon <strong>CAP</strong></a>.</div>';
-
-		buf += '<p>'+Dex.escapeHTML(ability.desc)+'</p>';
-
-		// past gens
-		var pastGenChanges = false;
-		for (var genNum = Dex.gen - 1; genNum >= ability.gen; genNum--) {
-			var nextGenAbility = Dex.forGen(genNum + 1).abilities.get(id);
-			var curGenAbility = Dex.forGen(genNum).abilities.get(id);
-			var changes = '';
-
-			if (curGenAbility.shortDesc !== nextGenAbility.shortDesc) {
-				changes += curGenAbility.shortDesc + ' <i class="fa fa-long-arrow-right"></i> ' + nextGenAbility.shortDesc + '<br />';
-			}
-
-			if (changes) {
-				if (!pastGenChanges) buf += '<h3>Past gens</h3><dl>';
-				buf += '<dt>Gen ' + genNum + ' <i class="fa fa-arrow-right"></i> ' + (genNum + 1) + ':</dt>';
-				buf += '<dd>' + changes + '</dd>';
-				pastGenChanges = true;
-			}
-		}
-		if (pastGenChanges) buf += '</dl>';
+		buf += '<p>'+Dex.escapeHTML(Names.desc(ability))+'</p>';
 
 		// pokemon
-		buf += '<h3>Pok&eacute;mon with this ability</h3>';
+		buf += '<h3>Pok&eacute;mon con esta habilidad</h3>';
 		buf += '<ul class="utilichart nokbd">';
-		buf += '<li>Loading...</li>';
+		buf += '<li>Cargando...</li>';
 		buf += '</ul>';
 
 		buf += '</div>';
@@ -105,28 +87,11 @@ var PokedexAbilityPanel = PokedexResultPanel.extend({
 		var ability = Dex.abilities.get(this.id);
 		var buf = '';
 		for (var pokemonid in BattlePokedex) {
-			var template = BattlePokedex[pokemonid];
-			if (!template.abilities) continue;
-			if (template.isNonstandard && !ability.isNonstandard) continue;
+			var template = Dex.species.get(pokemonid);
 			if (template.abilities['0'] === ability.name || template.abilities['1'] === ability.name || template.abilities['H'] === ability.name) {
 				buf += BattleSearch.renderPokemonRow(template);
 			}
 		}
-
-		var hasNonstandard = false;
-		for (var pokemonid in BattlePokedex) {
-			var template = BattlePokedex[pokemonid];
-			if (!template.abilities) continue;
-			if (!(template.isNonstandard && !ability.isNonstandard)) continue;
-			if (template.abilities['0'] === ability.name || template.abilities['1'] === ability.name || template.abilities['H'] === ability.name) {
-				if (!hasNonstandard) {
-					buf += '<li class="resultheader"><h3>Unavailable Pok&eacute;mon with this ability</h3></li>';
-					hasNonstandard = true;
-				}
-				buf += BattleSearch.renderPokemonRow(template);
-			}
-		}
-
 		this.$('.utilichart').html(buf);
 	}
 });
@@ -135,15 +100,15 @@ var PokedexTypePanel = PokedexResultPanel.extend({
 		id = toID(id);
 		this.type = id[0].toUpperCase()+id.substr(1);
 		var type = Dex.types.get(this.type);
-		this.shortTitle = this.type;
+		this.shortTitle = Names.type(this.type);
 
 		var buf = '<div class="pfx-body dexentry">';
 		buf += '<a href="/" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
-		buf += '<h1><a href="/types/'+id+'" data-target="push" class="subtle">'+this.type+'</a></h1>';
+		buf += '<h1><a href="/types/'+id+'" data-target="push" class="subtle">'+Names.type(this.type)+'</a></h1>';
 		buf += '<dl>';
 		var atLeastOne = false;
 
-		buf += '<dt>Weaknesses:</dt> <dd>';
+		buf += '<dt>Debilidades:</dt> <dd>';
 		for (var attackType in type.damageTaken) {
 			if (type.damageTaken[attackType] == 1) {
 				buf += '<a href="/types/'+toID(attackType)+'" data-target="push">'+Dex.getTypeIcon(attackType)+'</a> ';
@@ -151,11 +116,11 @@ var PokedexTypePanel = PokedexResultPanel.extend({
 			}
 		}
 		if (!atLeastOne) {
-			buf += '<em>No weaknesses</em>';
+			buf += '<em>Ninguna</em>';
 		}
 		buf += '</dd>';
 
-		buf += '<dt>Resistances:</dt> <dd>';
+		buf += '<dt>Resistencias:</dt> <dd>';
 		atLeastOne = false;
 		for (var attackType in type.damageTaken) {
 			if (type.damageTaken[attackType] == 2) {
@@ -164,36 +129,36 @@ var PokedexTypePanel = PokedexResultPanel.extend({
 			}
 		}
 		if (!atLeastOne) {
-			buf += '<em>No resistances</em>';
+			buf += '<em>Ninguna</em>';
 		}
 		buf += '</dd>';
 
-		buf += '<dt>Immunities:</dt> <dd>';
+		buf += '<dt>Inmunidades:</dt> <dd>';
 		atLeastOne = false;
 		for (var attackType in type.damageTaken) {
 			if (type.damageTaken[attackType] == 3) {
 				if (attackType === attackType.toLowerCase()) {
 					switch (attackType) {
 					case 'hail':
-						buf += '<div><small><a href="/moves/hail" data-target="push">Hail</a> damage</small></div>';
+						buf += '<div><small>Da&ntilde;o de <a href="/moves/hail" data-target="push">'+Names.move('hail')+'</a></small></div>';
 						break;
 					case 'sandstorm':
-						buf += '<div><small><a href="/moves/sandstorm" data-target="push">Sandstorm</a> damage</small></div>';
+						buf += '<div><small>Da&ntilde;o de <a href="/moves/sandstorm" data-target="push">'+Names.move('sandstorm')+'</a></small></div>';
 						break;
 					case 'powder':
-						buf += '<div><small><a href="/tags/powder" data-target="push">Powder moves</a></small></div>';
+						buf += '<div><small><a href="/tags/powder" data-target="push">Movimientos de polvo</a></small></div>';
 						break;
 					case 'frz':
-						buf += '<div><small>FRZ status</small></div>';
+						buf += '<div><small>Congelaci&oacute;n</small></div>';
 						break;
 					case 'brn':
-						buf += '<div><small>BRN status</small></div>';
+						buf += '<div><small>Quemaduras</small></div>';
 						break;
 					case 'psn':
-						buf += '<div><small>PSN status</small></div>';
+						buf += '<div><small>Envenenamiento</small></div>';
 						break;
 					case 'par':
-						buf += '<div><small>PAR status</small></div>';
+						buf += '<div><small>Par&aacute;lisis</small></div>';
 						break;
 					}
 					if (!atLeastOne) atLeastOne = null;
@@ -205,9 +170,9 @@ var PokedexTypePanel = PokedexResultPanel.extend({
 		}
 		if (!atLeastOne) {
 			if (atLeastOne === null) {
-				buf += '<div><em>No type immunities</em></div>';
+				buf += '<div><em>Ninguna a tipos</em></div>';
 			} else {
-				buf += '<em>No immunities</em>';
+				buf += '<em>Ninguna</em>';
 			}
 		}
 		buf += '</dd>';
@@ -215,7 +180,7 @@ var PokedexTypePanel = PokedexResultPanel.extend({
 		buf += '</dl>';
 
 		// move list
-		buf += '<ul class="tabbar"><li><button class="button nav-first cur" value="move">Moves</button></li><li><button class="button nav-last" value="pokemon">Pokemon</button></li></ul>';
+		buf += '<ul class="tabbar"><li><button class="button nav-first cur" value="move">Movimientos</button></li><li><button class="button nav-last" value="pokemon">Pok&eacute;mon</button></li></ul>';
 		buf += '<ul class="utilichart nokbd">';
 		buf += '</ul>';
 
@@ -242,149 +207,121 @@ var PokedexTypePanel = PokedexResultPanel.extend({
 	},
 	renderMoveList: function() {
 		var type = this.type;
-		var buf = '<li class="resultheader"><h3>Physical '+type+' moves</h3></li>';
+		var typeName = Names.type(type);
+		var headers = {
+			Physical: 'Movimientos f&iacute;sicos de tipo '+typeName,
+			Special: 'Movimientos especiales de tipo '+typeName,
+			Status: 'Movimientos de estado de tipo '+typeName
+		};
+		var bufs = {Physical: '', Special: '', Status: ''};
 		for (var moveid in BattleMovedex) {
-			var move = BattleMovedex[moveid];
-			if (move.type === type && move.category === 'Physical') {
-				buf += BattleSearch.renderMoveRow(move);
-			}
-		}
-		this.$('.utilichart').html(buf)
-			.css('min-height', 27*3 + 33*BattleSearchCountIndex[type+' move']);
-
-		setTimeout(this.renderMoveList2.bind(this));
-	},
-	renderMoveList2: function() {
-		var type = this.type;
-		var bufs = ['<li class="resultheader"><h3>Physical '+type+' moves</h3></li>','<li class="resultheader"><h3>Special '+type+' moves</h3></li>','<li class="resultheader"><h3>Status '+type+' moves</h3></li>'];
-		var bufChart = {Physical:0,Special:1,Status:2};
-		for (var moveid in BattleMovedex) {
-			var move = BattleMovedex[moveid];
+			var move = Dex.moves.get(moveid);
 			if (move.type === type) {
-				bufs[bufChart[move.category]] += BattleSearch.renderMoveRow(move);
+				bufs[move.category] += BattleSearch.renderMoveRow(move);
 			}
 		}
-		this.$('.utilichart').html(bufs.join(''))
-			.css('min-height', 27*3 + 33*BattleSearchCountIndex[type+' move']);
+		var buf = '';
+		for (var category in bufs) {
+			if (bufs[category]) buf += '<li class="resultheader"><h3>'+headers[category]+'</h3></li>'+bufs[category];
+		}
+		this.$('.utilichart').html(buf);
 	},
 	renderPokemonList: function() {
 		var type = this.type;
-		var pureBuf = '<li class="resultheader"><h3>Pure '+type+' Pok&eacute;mon</h3></li>';
+		var typeName = Names.type(type);
+		var pureBuf = '';
+		var primaryBuf = '';
+		var secondaryBuf = '';
 		for (var templateid in BattlePokedex) {
-			var template = BattlePokedex[templateid];
-			if (!template.types) continue;
-			if (template.types[0] === type && !template.types[1]) {
-				pureBuf += BattleSearch.renderPokemonRow(template);
-			}
-		}
-		this.$('.utilichart').html(pureBuf)
-			.css('min-height', 27*3 + 33*BattleSearchCountIndex[type+' pokemon']);
-
-		setTimeout(this.renderPokemonList2.bind(this));
-	},
-	renderPokemonList2: function() {
-		var type = this.type;
-		var primaryBuf = '<li class="resultheader"><h3>Primary '+type+' Pok&eacute;mon</h3></li>';
-		var secondaryBuf = '<li class="resultheader"><h3>Secondary '+type+' Pok&eacute;mon</h3></li>';
-		for (var templateid in BattlePokedex) {
-			var template = BattlePokedex[templateid];
+			var template = Dex.species.get(templateid);
 			if (template.types[0] === type) {
 				if (template.types[1]) {
 					primaryBuf += BattleSearch.renderPokemonRow(template);
+				} else {
+					pureBuf += BattleSearch.renderPokemonRow(template);
 				}
 			} else if (template.types[1] === type) {
 				secondaryBuf += BattleSearch.renderPokemonRow(template);
 			}
 		}
-		this.$('.utilichart').append(primaryBuf + secondaryBuf);
+		var buf = '';
+		if (pureBuf) buf += '<li class="resultheader"><h3>Pok&eacute;mon de tipo '+typeName+' puro</h3></li>'+pureBuf;
+		if (primaryBuf) buf += '<li class="resultheader"><h3>Pok&eacute;mon con '+typeName+' como primer tipo</h3></li>'+primaryBuf;
+		if (secondaryBuf) buf += '<li class="resultheader"><h3>Pok&eacute;mon con '+typeName+' como segundo tipo</h3></li>'+secondaryBuf;
+		this.$('.utilichart').html(buf);
 	}
 });
 var PokedexTagPanel = PokedexResultPanel.extend({
 	table: {
 		contact: {
-			name: 'Contact',
+			name: 'Contacto',
 			tag: 'contact',
-			desc: 'Affected by a variety of moves, abilities, and items.</p><p>Moves affected by contact moves include: Spiky Shield, King\'s Shield. Abilities affected by contact moves include: Iron Barbs, Rough Skin, Gooey, Flame Body, Static, Tough Claws. Items affected by contact moves include: Rocky Helmet, Sticky Barb.'
+			desc: 'Interact&uacute;a con varios movimientos, habilidades y objetos.</p><p>Movimientos: ' + effectLinks('moves', ['spikyshield', 'kingsshield']) + '. Habilidades: ' + effectLinks('abilities', ['ironbarbs', 'roughskin', 'gooey', 'flamebody', 'static', 'toughclaws']) + '. Objetos: ' + effectLinks('items', ['rockyhelmet', 'stickybarb']) + '.'
 		},
 		sound: {
-			name: 'Sound',
+			name: 'Sonido',
 			tag: 'sound',
-			desc: 'Bypasses <a href="/moves/substitute" data-target="push">Substitute</a>. Doesn\'t affect <a href="/abilities/soundproof" data-target="push">Soundproof</a> Pok&eacute;mon.'
+			desc: 'Ignora ' + effectLink('moves', 'substitute') + '. No afecta a los Pok&eacute;mon con ' + effectLink('abilities', 'soundproof') + '.'
 		},
 		powder: {
-			name: 'Powder',
+			name: 'Polvo',
 			tag: 'powder',
-			desc: 'Doesn\'t affect <a href="/types/grass" data-target="push">Grass-type</a> Pok&eacute;mon, <a href="/abilities/overcoat" data-target="push">Overcoat</a> Pok&eacute;mon, or <a href="/items/safetygoggles" data-target="push">Safety Goggles</a> holders.'
+			desc: 'No afecta a los Pok&eacute;mon de tipo <a href="/types/grass" data-target="push">' + Names.type('Grass') + '</a>, a los que tienen ' + effectLink('abilities', 'overcoat') + ' ni a los que llevan ' + effectLink('items', 'safetygoggles') + '.'
 		},
 		fist: {
-			name: 'Fist',
+			name: 'Pu&ntilde;o',
 			tag: 'punch',
-			desc: 'Boosted 1.2x by <a href="/abilities/ironfist" data-target="push">Iron Fist</a>.'
+			desc: 'Potenciados &times;1,2 por ' + effectLink('abilities', 'ironfist') + '.'
 		},
 		pulse: {
-			name: 'Pulse',
+			name: 'Pulso',
 			tag: 'pulse',
-			desc: 'Boosted 1.5x by <a href="/abilities/megalauncher" data-target="push">Mega Launcher</a>.'
+			desc: 'Potenciados &times;1,5 por ' + effectLink('abilities', 'megalauncher') + '.'
 		},
 		bite: {
-			name: 'Bite',
+			name: 'Mordisco',
 			tag: 'bite',
-			desc: 'Boosted 1.5x by <a href="/abilities/strongjaw" data-target="push">Strong Jaw</a>.'
+			desc: 'Potenciados &times;1,5 por ' + effectLink('abilities', 'strongjaw') + '.'
 		},
 		ballistic: {
-			name: 'Ballistic',
+			name: 'Bal&iacute;stico',
 			tag: 'bullet',
-			desc: 'Doesn\'t affect <a href="/abilities/bulletproof" data-target="push">Bulletproof</a> Pok&eacute;mon.'
+			desc: 'No afectan a los Pok&eacute;mon con ' + effectLink('abilities', 'bulletproof') + '.'
 		},
 		slicing: {
-			name: 'Slicing',
+			name: 'Corte',
 			tag: 'slicing',
-			desc: 'Boosted 1.5x by <a href="/abilities/sharpness" data-target="push">Sharpness</a>.'
+			desc: 'Potenciados &times;1,5 por ' + effectLink('abilities', 'sharpness') + '.'
 		},
 		wind: {
-			name: 'Wind',
+			name: 'Viento',
 			tag: 'wind',
-			desc: 'Pok&eacute;mon with <a href="/abilities/windpower" data-target="push">Wind Power</a> gain the charge effect after being hit. Pok&eacute;mon with <a href="/abilities/windrider" data-target="push">Wind Rider</a> have their Attack raised by 1 stage and are immune.'
+			desc: 'Los Pok&eacute;mon con ' + effectLink('abilities', 'windpower') + ' se cargan al recibirlos. Los Pok&eacute;mon con ' + effectLink('abilities', 'windrider') + ' son inmunes y suben un nivel su Ataque.'
 		},
 		bypassprotect: {
-			name: 'Bypass Protect',
+			name: 'Ignora Protecci&oacute;n',
 			tag: '',
-			desc: 'Bypasses <a class="subtle" href="/moves/protect" data-target="push">Protect</a>, <a class="subtle" href="/moves/detect" data-target="push">Detect</a>, <a class="subtle" href="/moves/kingsshield" data-target="push">King\'s Shield</a>, and <a class="subtle" href="/moves/spikyshield" data-target="push">Spiky Shield</a>.'
+			desc: 'Ignora ' + effectLinks('moves', ['protect', 'detect', 'kingsshield', 'spikyshield'], 'subtle') + '.'
 		},
 		nonreflectable: {
-			name: 'Nonreflectable',
+			name: 'No reflejable',
 			tag: '',
-			desc: 'Can\'t be bounced by <a class="subtle" href="/moves/magiccoat" data-target="push">Magic Coat</a> or <a class="subtle" href="/abilities/magicbounce" data-target="push">Magic Bounce</a>.'
+			desc: 'No lo devuelven ' + effectLink('moves', 'magiccoat', 'subtle') + ' ni ' + effectLink('abilities', 'magicbounce', 'subtle') + '.'
 		},
 		nonmirror: {
-			name: 'Nonmirror',
+			name: 'No copiable',
 			tag: '',
-			desc: 'Can\'t be copied by <a class="subtle" href="/moves/mirrormove" data-target="push">Mirror Move</a>.'
+			desc: effectLink('moves', 'mirrormove', 'subtle') + ' no puede copiarlo.'
 		},
 		nonsnatchable: {
-			name: 'Nonsnatchable',
+			name: 'No robable',
 			tag: '',
-			desc: 'Can\'t be copied by <a class="subtle" href="/moves/snatch" data-target="push">Snatch</a>.'
+			desc: effectLink('moves', 'snatch', 'subtle') + ' no puede robarlo.'
 		},
 		bypasssub: {
-			name: 'Bypass Substitute',
+			name: 'Ignora Sustituto',
 			tag: 'bypasssub',
-			desc: 'Bypasses but does not break a <a class="subtle" href="/moves/substitute" data-target="push">Substitute</a>.'
-		},
-		zmove: {
-			name: 'Z-Move',
-			tag: '',
-			desc: 'Is a <a class="subtle" href="/articles/zmoves" data-target="push">Z-Move</a>.'
-		},
-		maxmove: {
-			name: 'Max Move',
-			tag: '',
-			desc: 'Is a <a class="subtle" href="/articles/maxmoves" data-target="push">Max Move</a>.'
-		},
-		gmaxmove: {
-			name: 'G-Max Move',
-			tag: '',
-			desc: 'Is a <a class="subtle" href="/articles/gmaxmoves" data-target="push">G-Max Move</a>.'
+			desc: 'Atraviesa un ' + effectLink('moves', 'substitute', 'subtle') + ' sin romperlo.'
 		}
 	},
 	initialize: function(id) {
@@ -402,7 +339,7 @@ var PokedexTagPanel = PokedexResultPanel.extend({
 		if (tag) buf += '<p>'+tag.desc+'</p>';
 
 		// distribution
-		buf += '<h3>'+name+' moves</h3>';
+		buf += '<h3>Movimientos</h3>';
 		buf += '<ul class="utilichart metricchart nokbd">';
 		buf += '</ul>';
 
@@ -429,12 +366,6 @@ var PokedexTagPanel = PokedexResultPanel.extend({
 		} else if (this.id === 'nonreflectable') {
 			for (var moveid in BattleMovedex) {
 				if (BattleMovedex[moveid].target !== 'self' && BattleMovedex[moveid].category === 'Status' && BattleMovedex[moveid].flags && !('reflectable' in BattleMovedex[moveid].flags)) {
-					results.push(moveid);
-				}
-			}
-		} else if (this.id === 'zmove') {
-			for (var moveid in BattleMovedex) {
-				if (BattleMovedex[moveid].isZ) {
 					results.push(moveid);
 				}
 			}
@@ -488,9 +419,9 @@ var PokedexTagPanel = PokedexResultPanel.extend({
 	},
 	renderRow: function(i, offscreen) {
 		var results = this.results;
-		var move = BattleMovedex[results[i]];
+		var move = Dex.moves.get(results[i]);
 		if (offscreen) {
-			return move.name;
+			return Names.move(move);
 		} else {
 			return BattleSearch.renderMoveRowInner(move);
 		}
@@ -558,81 +489,36 @@ var PokedexTagPanel = PokedexResultPanel.extend({
 });
 var PokedexEggGroupPanel = PokedexResultPanel.extend({
 	table: {
-		amorphous: {
-			name: 'Amorphous',
-			desc: ""
-		},
-		bug: {
-			name: 'Bug',
-			desc: ""
-		},
-		ditto: {
-			name: 'Ditto',
-			desc: "Can breed with anything."
-		},
-		dragon: {
-			name: 'Dragon',
-			desc: ""
-		},
-		fairy: {
-			name: 'Fairy',
-			desc: ""
-		},
-		field: {
-			name: 'Field',
-			desc: ""
-		},
-		flying: {
-			name: 'Flying',
-			desc: ""
-		},
-		grass: {
-			name: 'Grass',
-			desc: ""
-		},
-		humanlike: {
-			name: 'Human-Like',
-			desc: ""
-		},
-		mineral: {
-			name: 'Mineral',
-			desc: ""
-		},
-		monster: {
-			name: 'Monster',
-			desc: ""
-		},
-		plant: {
-			name: 'Plant',
-			desc: ""
-		},
-		undiscovered: {
-			name: 'Undiscovered',
-			desc: "Can't breed."
-		},
-		water1: {
-			name: 'Water 1',
-			desc: ""
-		},
-		water2: {
-			name: 'Water 2',
-			desc: ""
-		},
-		water3: {
-			name: 'Water 3',
-			desc: ""
-		}
+		amorphous: 'Amorphous',
+		bug: 'Bug',
+		ditto: 'Ditto',
+		dragon: 'Dragon',
+		fairy: 'Fairy',
+		field: 'Field',
+		flying: 'Flying',
+		grass: 'Grass',
+		humanlike: 'Human-Like',
+		mineral: 'Mineral',
+		monster: 'Monster',
+		undiscovered: 'Undiscovered',
+		water1: 'Water 1',
+		water2: 'Water 2',
+		water3: 'Water 3'
+	},
+	descs: {
+		ditto: "Puede criar con casi cualquier Pok&eacute;mon.",
+		undiscovered: "No puede criar."
 	},
 	initialize: function(id) {
 		var ids = id.split('+');
 		for (var i = 0; i < ids.length; i++) ids[i] = toID(ids[i]);
 		this.id = ids[0];
-		var names = this.table[ids[0]].name;
+		var names = Names.eggGroup(this.table[ids[0]]);
 		this.shortTitle = names;
 		if (ids[1]) {
 			this.id2 = ids[1];
-			names += ' + '+this.table[ids[1]].name;
-			this.shortTitle = "Egg groups";
+			names += ' + '+Names.eggGroup(this.table[ids[1]]);
+			this.shortTitle = "Grupos huevo";
 		}
 
 		var buf = '<div class="pfx-body dexentry">';
@@ -641,13 +527,13 @@ var PokedexEggGroupPanel = PokedexResultPanel.extend({
 		buf += '<h1><a href="/egggroups/'+id+'" data-target="push" class="subtle">'+names+'</a></h1>';
 
 		if (this.id2) {
-			buf += '<p>All Pok&eacute;mon in either the <a href="/egggroups/'+this.id+'" data-target="push">'+this.table[ids[0]].name+'</a> or <a href="/egggroups/'+this.id2+'" data-target="push">'+this.table[ids[1]].name+'</a> egg group.</p>';
-		} else {
-			buf += '<p>'+this.table[ids[0]].desc+'</p>';
+			buf += '<p>Todos los Pok&eacute;mon de los grupos huevo <a href="/egggroups/'+this.id+'" data-target="push">'+Names.eggGroup(this.table[ids[0]])+'</a> o <a href="/egggroups/'+this.id2+'" data-target="push">'+Names.eggGroup(this.table[ids[1]])+'</a>.</p>';
+		} else if (this.descs[ids[0]]) {
+			buf += '<p>'+this.descs[ids[0]]+'</p>';
 		}
 
 		// distribution
-		buf += '<h3>Basic '+names+' pokemon</h3>';
+		buf += '<h3>Pok&eacute;mon</h3>';
 		buf += '<ul class="utilichart metricchart nokbd">';
 		buf += '</ul>';
 
@@ -658,24 +544,20 @@ var PokedexEggGroupPanel = PokedexResultPanel.extend({
 		setTimeout(this.renderDistribution.bind(this));
 	},
 	getDistribution: function() {
-		var name = this.table[this.id].name;
+		var name = this.table[this.id];
 		var name2 = '!';
-		if (this.id2) name2 = this.table[this.id2].name;
+		if (this.id2) name2 = this.table[this.id2];
 		if (this.results) return this.results;
 		var results = [];
 		for (var pokemonid in BattlePokedex) {
-			var pokemon = BattlePokedex[pokemonid];
+			var pokemon = Dex.species.get(pokemonid);
 			var eggGroups = pokemon.eggGroups;
-			// var prevo = toID(pokemon.prevo);
 			if (!eggGroups || pokemon.forme) continue;
-			// || (prevo && BattlePokedex[prevo].eggGroups[0] !== "Undiscovered") - irrelevant in gen 9
-			if (pokemon && pokemon.isNonstandard) continue;
 			if (eggGroups[0] === name || eggGroups[1] === name ||
 				eggGroups[0] === name2 || eggGroups[1] === name2) {
 				results.push(pokemonid);
 			}
 		}
-		results.sort();
 		return this.results = results;
 	},
 	renderDistribution: function() {
@@ -713,9 +595,9 @@ var PokedexEggGroupPanel = PokedexResultPanel.extend({
 	},
 	renderRow: function(i, offscreen) {
 		var results = this.results;
-		var template = BattlePokedex[results[i]];
+		var template = Dex.species.get(results[i]);
 		if (offscreen) {
-			return ''+template.species+' '+template.abilities['0']+' '+(template.abilities['1']||'')+' '+(template.abilities['H']||'')+'';
+			return Names.species(template);
 		} else {
 			return BattleSearch.renderTaggedPokemonRowInner(template, '<span class="picon" style="margin-top:-12px;'+Dex.getPokemonIcon('egg')+'"></span>');
 		}
@@ -784,116 +666,25 @@ var PokedexEggGroupPanel = PokedexResultPanel.extend({
 var PokedexCategoryPanel = PokedexResultPanel.extend({
 	initialize: function(id) {
 		id = toID(id);
-		var category = {
-			id: id,
-			name: id[0].toUpperCase()+id.substr(1)
-		};
-		this.shortTitle = category.name;
-
-		var buf = '<div class="pfx-body dexentry">';
-		buf += '<a href="/" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
-		buf += '<h1><a href="/categories/'+id+'" data-target="push" class="subtle">'+category.name+'</a></h1>';
-		switch (id) {
-		case 'physical':
-			buf += '<p>Physical moves are damaging moves generally calculated with the user\'s Attack stat and the target\'s Defense stat.</p>';
-			break;
-		case 'special':
-			buf += '<p>Special moves are damaging moves generally calculated with the user\'s Special Attack stat and the target\'s Special Defense stat.</p>';
-			break;
-		case 'status':
-			buf += '<p>Status moves are moves that don\'t deal damage directly.</p>';
-			break;
-		}
-		buf += '</div>';
-
-		this.html(buf);
-	}
-});
-var PokedexTierPanel = PokedexResultPanel.extend({
-	initialize: function(id) {
-		id = toID(id);
-		var tierTable = {
-			ag: "AG",
-			uber: "Uber",
-			ou: "OU",
-			uu: "UU",
-			ru: "RU",
-			nu: "NU",
-			pu: "PU",
-			nfe: "NFE",
-			lcuber: "LC Uber",
-			lc: "LC",
-			cap: "CAP",
-			capnfe: "CAP NFE",
-			caplc: "CAP LC",
-			uubl: "UUBL",
-			rubl: "RUBL",
-			nubl: "NUBL",
-			publ: "PUBL",
-			unreleased: "Unreleased",
-			illegal: "Illegal",
-		};
-		var name = tierTable[id] || id;
-		this.id = id;
+		var name = Names.category(id);
 		this.shortTitle = name;
 
 		var buf = '<div class="pfx-body dexentry">';
 		buf += '<a href="/" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
-		buf += '<h1><a href="/tiers/'+id+'" data-target="push" class="subtle">'+name+'</a></h1>';
-
-		if (id === 'nfe') {
-			buf += '<p>"NFE" (Not Fully Evolved) as a tier refers to NFE Pokémon that aren\'t legal in LC and don\'t make the usage cutoff for a tier such as PU.</p>';
+		buf += '<h1><a href="/categories/'+id+'" data-target="push" class="subtle">'+name+'</a></h1>';
+		switch (id) {
+		case 'physical':
+			buf += '<p>Los movimientos f&iacute;sicos hacen da&ntilde;o que normalmente depende del Ataque del usuario y de la Defensa del objetivo.</p>';
+			break;
+		case 'special':
+			buf += '<p>Los movimientos especiales hacen da&ntilde;o que normalmente depende del Ataque Especial del usuario y de la Defensa Especial del objetivo.</p>';
+			break;
+		case 'status':
+			buf += '<p>Los movimientos de estado no hacen da&ntilde;o directamente.</p>';
+			break;
 		}
-
-		if (id.startsWith('cap')) buf += '<div class="warning"><a href="http://www.smogon.com/cap/" target="_blank">Smogon CAP</a> is a project to make up Pok&eacute;mon.</div>';
-
-		// buf += '<p></p>';
-
-		// pokemon
-		buf += '<h3>Pok&eacute;mon in this tier</h3>';
-		buf += '<ul class="utilichart nokbd">';
-		buf += '</ul>';
-
 		buf += '</div>';
 
 		this.html(buf);
-
-		setTimeout(this.renderPokemonList.bind(this));
-	},
-	renderPokemonList: function(list) {
-		var tierName = this.shortTitle;
-		var tierName2 = '(' + tierName + ')';
-		var buf = '';
-		for (var pokemonid in BattlePokedex) {
-			var template = BattlePokedex[pokemonid];
-			if (template.tier === tierName || template.tier === tierName2) {
-				buf += BattleSearch.renderPokemonRow(template);
-			}
-		}
-		this.$('.utilichart').html(buf);
-	}
-});
-var PokedexArticlePanel = PokedexResultPanel.extend({
-	initialize: function(id) {
-		id = toID(id);
-		this.shortTitle = id;
-
-		var buf = '<div class="pfx-body dexentry">';
-		buf += '<a href="/" class="pfx-backbutton" data-target="back"><i class="fa fa-chevron-left"></i> Pok&eacute;dex</a>';
-		buf += '<h1><a href="/articles/'+id+'" data-target="push" class="subtle">'+id+'</a></h1>';
-		buf += '<div class="article-content"><em>Loading...</em></div>';
-		buf += '</div>';
-
-		this.html(buf);
-
-		var self = this;
-		$.get('/.articles-cached/' + id + '.html').done(function (html) {
-			var html = html.replace(/<h1[^>]*>([^<]+)<\/h1>/, function (match, innerMatch) {
-				self.shortTitle = innerMatch;
-				self.$('h1').first().html('<a href="/articles/' + id + '" class="subtle" data-target="push">' + innerMatch + '</a>');
-				return '';
-			});
-			self.$('.article-content').html(html);
-		});
 	}
 });

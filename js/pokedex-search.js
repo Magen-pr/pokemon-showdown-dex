@@ -27,12 +27,12 @@ var PokedexSearchPanel = Panels.Panel.extend({
 		var oldSelectionStart = $oldSearchbox[0] && $oldSearchbox[0].selectionStart || 0;
 		var oldSelectionEnd = $oldSearchbox[0] && $oldSearchbox[0].selectionEnd || 0;
 		buf += '<h1><a href="/" data-target="replace">Pok&eacute;dex</a></h1>';
-		buf += '<ul class="tabbar centered" style="margin-bottom: 18px"><li><button class="button nav-first' + (fragment === '' ? ' cur' : '') + '" value="">Search</button></li>';
+		buf += '<ul class="tabbar centered" style="margin-bottom: 18px"><li><button class="button nav-first' + (fragment === '' ? ' cur' : '') + '" value="">Buscar</button></li>';
 		buf += '<li><button class="button' + (fragment === 'pokemon/' ? ' cur' : '') + '" value="pokemon/">Pok&eacute;mon</button></li>';
-		buf += '<li><button class="button nav-last' + (fragment === 'moves/' ? ' cur' : '') + '" value="moves/">Moves</button></li></ul>';
-		buf += '<div class="searchboxwrapper"><input class="textbox searchbox" type="search" name="q" value="' + Dex.escapeHTML($oldSearchbox.val() || '') + '" autocomplete="off" placeholder="Search Pok&eacute;mon, moves, abilities, items, types, or more" /></div>';
+		buf += '<li><button class="button nav-last' + (fragment === 'moves/' ? ' cur' : '') + '" value="moves/">Movimientos</button></li></ul>';
+		buf += '<div class="searchboxwrapper"><input class="textbox searchbox" type="search" name="q" value="' + Dex.escapeHTML($oldSearchbox.val() || '') + '" autocomplete="off" placeholder="Busca Pok&eacute;mon, movimientos, habilidades, objetos, tipos..." /></div>';
 		if (fragment === '') {
-			buf += '<p class="buttonbar"><button class="button"><i class="fa fa-search" aria-hidden="true"></i> <strong>Pok&eacute;dex Search</strong></button> <button name="lucky" class="button">I\'m Feeling Lucky</button></p>';
+			buf += '<p class="buttonbar"><button class="button"><i class="fa fa-search" aria-hidden="true"></i> <strong>Buscar en la Pok&eacute;dex</strong></button></p>';
 		}
 		buf += '</form>';
 		buf += '<div class="results"></div></div>';
@@ -48,11 +48,11 @@ var PokedexSearchPanel = Panels.Panel.extend({
 			});
 			if (fragment === 'pokemon/') {
 				search.setType('pokemon');
-				$searchbox.attr('placeholder', 'Search pokemon OR filter by type, move, ability, egg group');
+				$searchbox.attr('placeholder', 'Busca Pokémon o filtra por tipo, movimiento, habilidad...');
 				this.$('.buttonbar').remove();
 			} else if (fragment === 'moves/') {
 				search.setType('move');
-				$searchbox.attr('placeholder', 'Search moves OR filter by type, category, pokemon');
+				$searchbox.attr('placeholder', 'Busca movimientos o filtra por tipo, clase o Pokémon');
 				this.$('.buttonbar').remove();
 			}
 			this.search.externalFilter = true;
@@ -72,7 +72,6 @@ var PokedexSearchPanel = Panels.Panel.extend({
 	removeFilter: function(e) {
 		this.search.removeFilter(e);
 		this.updateFilters();
-		console.log('focus ' + this.$searchbox.val());
 		this.$searchbox.focus();
 	},
 	updateFilters: function() {
@@ -81,7 +80,7 @@ var PokedexSearchPanel = Panels.Panel.extend({
 		if (this.search.qType === 'pokemon') {
 			buf = '<button class="filter noclear" value=":">Pokémon</button> ';
 		} else if (this.search.qType === 'move') {
-			buf = '<button class="filter noclear" value=":">Moves</button> ';
+			buf = '<button class="filter noclear" value=":">Movimientos</button> ';
 		} else {
 			this.$('.searchbox-filters').remove();
 			this.$searchbox.css('padding', '2px');
@@ -90,9 +89,7 @@ var PokedexSearchPanel = Panels.Panel.extend({
 		if (this.search.filters) {
 			for (var i = 0; i < this.search.filters.length; i++) {
 				var filter = this.search.filters[i];
-				var text = filter[1];
-				if (filter[0] === 'move') text = Dex.moves.get(text).name;
-				if (filter[0] === 'pokemon') text = Dex.species.get(text).name;
+				var text = Dex.escapeHTML(BattleSearch.filterName(filter));
 				buf += '<button class="filter" value="' + Dex.escapeHTML(filter.join(':')) + '">' + text + ' <i class="fa fa-times-circle"></i></button> ';
 			}
 		}
@@ -109,8 +106,7 @@ var PokedexSearchPanel = Panels.Panel.extend({
 	},
 	submit: function(e) {
 		e.preventDefault();
-		console.log('focus ' + this.$('.searchbox').val());
-		this.$('.searchbox').attr('placeholder', 'Type in: Pokemon, move, item, ability...').focus();
+		this.$('.searchbox').attr('placeholder', 'Escribe un Pokémon, movimiento, objeto, habilidad...').focus();
 	},
 	keyup: function (e) {
 		var val = this.$searchbox.val();
@@ -229,12 +225,6 @@ var PokedexSearchPanel = Panels.Panel.extend({
 			this.app.go(e.target.value, this, true);
 			return;
 		}
-		if (e.target.tagName === 'BUTTON' && e.target.name === 'lucky') {
-			e.preventDefault();
-			e.stopPropagation();
-			alert(['That\'s pretty cool.','Your mom\'s feeling lucky.','I see.','If you feel lucky for more than four hours, perhaps you should see a doctor.'][Math.floor(Math.random()*4)]);
-			return;
-		}
 		var scrollLoc = this.$el.scrollTop();
 		this.$searchbox.focus();
 		this.$el.scrollTop(scrollLoc);
@@ -268,7 +258,7 @@ var PokedexSearchPanel = Panels.Panel.extend({
 		}
 	},
 	checkExactMatch: function() {
-		if (this.search && this.search.exactMatch && this.search.q !== 'metronome' && this.search.q !== 'psychic') {
+		if (this.search && this.search.exactMatch && !['metronome', 'psychic', 'metronomo', 'psiquico'].includes(this.search.q)) {
 			setTimeout(function(){
 				this.app.go($(this.activeLink).attr('href'), this, false, $(this.activeLink), true);
 			}.bind(this));

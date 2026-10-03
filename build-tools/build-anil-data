@@ -1,0 +1,101 @@
+#!/usr/bin/env node
+'use strict';
+
+/**
+ * Builds data/anil.js: the species, moves, items, abilities and learnsets of
+ * the gen9anil mod. It's loaded after the client's data files and replaces
+ * them, so the dex only shows what exists in Pokémon Añil. Names and
+ * descriptions come from the client's text files.
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+process.chdir(path.resolve(__dirname, '..'));
+const Config = require('../config/config');
+const serverDir = path.resolve(Config.serverDir || '../pokemon-showdown');
+const {Dex} = require(path.join(serverDir, 'dist/sim/dex'));
+
+const MOD = 'gen9anil';
+const dex = Dex.mod(MOD);
+
+const SPECIES_FIELDS = [
+	'num', 'name', 'baseSpecies', 'forme', 'baseForme', 'types', 'gender', 'genderRatio', 'baseStats', 'abilities',
+	'heightm', 'weightkg', 'color', 'prevo', 'evos', 'evoLevel', 'evoType', 'evoItem', 'evoMove', 'evoCondition',
+	'eggGroups', 'otherFormes', 'cosmeticFormes', 'formeOrder', 'requiredItem', 'requiredItems', 'requiredAbility',
+	'requiredMove', 'changesFrom', 'battleOnly', 'isCosmeticForme',
+];
+const MOVE_FIELDS = [
+	'num', 'name', 'type', 'category', 'basePower', 'accuracy', 'pp', 'priority', 'target', 'flags', 'secondary',
+	'secondaries', 'self', 'drain', 'recoil', 'heal', 'multihit', 'critRatio', 'ohko', 'willCrit', 'forceSwitch',
+	'selfSwitch', 'selfdestruct', 'boosts', 'status', 'volatileStatus', 'sideCondition', 'weather', 'terrain',
+	'pseudoWeather', 'ignoreDefensive', 'ignoreEvasion', 'breaksProtect', 'isZ', 'isMax', 'contestType',
+];
+const ITEM_FIELDS = [
+	'num', 'name', 'spritenum', 'fling', 'megaStone', 'megaEvolves', 'itemUser', 'onPlate', 'onDrive', 'onMemory',
+	'forcedForme', 'isBerry', 'naturalGift', 'isGem', 'isPokeball', 'zMove',
+];
+const ABILITY_FIELDS = ['num', 'name', 'rating', 'flags'];
+
+function pick(obj, fields) {
+	const out = {};
+	for (const field of fields) {
+		const value = obj[field];
+		if (value === undefined || value === null || value === '' || typeof value === 'function') continue;
+		if (Array.isArray(value) && !value.length) continue;
+		out[field] = value;
+	}
+	return JSON.parse(JSON.stringify(out));
+}
+
+const out = {};
+
+// dex order, each species followed by its formes
+const order = Object.keys(Dex.data.Pokedex);
+const position = id => (order.includes(id) ? order.indexOf(id) : order.length);
+const allSpecies = dex.species.all().filter(species => species.exists && !species.isNonstandard);
+allSpecies.sort((a, b) => a.num - b.num || (a.forme ? 1 : 0) - (b.forme ? 1 : 0) || position(a.id) - position(b.id));
+
+out.BattlePokedex = {};
+for (const species of allSpecies) {
+	out.BattlePokedex[species.id] = pick(species, SPECIES_FIELDS);
+}
+
+out.BattleMovedex = {};
+for (const move of dex.moves.all()) {
+	if (!move.exists || move.isNonstandard) continue;
+	out.BattleMovedex[move.id] = pick(move, MOVE_FIELDS);
+}
+
+out.BattleItems = {};
+for (const item of dex.items.all()) {
+	if (!item.exists || item.isNonstandard) continue;
+	out.BattleItems[item.id] = pick(item, ITEM_FIELDS);
+}
+
+out.BattleAbilities = {};
+for (const ability of dex.abilities.all()) {
+	if (!ability.exists || ability.isNonstandard) continue;
+	out.BattleAbilities[ability.id] = pick(ability, ABILITY_FIELDS);
+}
+
+out.BattleLearnsets = {};
+for (const id in out.BattlePokedex) {
+	const learnset = dex.species.getLearnsetData(id)?.learnset;
+	if (!learnset) continue;
+	const moves = {};
+	for (const moveid in learnset) {
+		if (out.BattleMovedex[moveid]) moves[moveid] = learnset[moveid].filter(source => source.startsWith('9'));
+	}
+	out.BattleLearnsets[id] = {learnset: moves};
+}
+
+let buf = '// DO NOT EDIT - automatically built with build-tools/build-anil-data\n\n';
+for (const table in out) {
+	buf += `exports.${table} = ${JSON.stringify(out[table])};\n\n`;
+}
+fs.mkdirSync('data', {recursive: true});
+fs.writeFileSync('data/anil.js', buf);
+
+const counts = Object.entries(out).map(([table, data]) => `${table} ${Object.keys(data).length}`).join(', ');
+console.log(`data/anil.js: ${counts} (${(buf.length / 1048576).toFixed(1)} MB)`);
