@@ -1,3 +1,13 @@
+// sprites that don't exist (no 3D model, no back sprite...): hide them, and their section if it ends up empty
+function hideMissingSprite(img) {
+	img.style.display = 'none';
+	var $section = $(img).closest('li');
+	if (!$section.find('img').filter(function () { return this.style.display !== 'none'; }).length) {
+		$section.prev('.resultheader').hide();
+		$section.hide();
+	}
+}
+
 var PokedexPokemonPanel = PokedexResultPanel.extend({
 	initialize: function(id) {
 		id = toID(id);
@@ -378,17 +388,21 @@ var PokedexPokemonPanel = PokedexResultPanel.extend({
 	renderDetails: function() {
 		var pokemon = Dex.species.get(this.id);
 		var buf = '';
-		var hideBroken = ' onerror="this.style.display=\'none\'"';
+		var hideBroken = ' onerror="hideMissingSprite(this)"';
 
 		buf += '<li class="resultheader"><h3>Detalles</h3></li>';
 		buf += '<li><dl><dt>Color:</dt><dd>'+Names.color(pokemon.color)+'</dd></dl></li>';
 
-		buf += '<li class="resultheader"><h3>Sprites animados</h3></li>';
-		buf += '<li class="content"><table class="sprites"><tr><td><img src="' + Dex.resourcePrefix + 'sprites/ani/' + pokemon.spriteid + '.gif"' + hideBroken + ' /></td>';
-		buf += '<td><img src="' + Dex.resourcePrefix + 'sprites/ani-shiny/' + pokemon.spriteid + '.gif"' + hideBroken + ' /></td></table>';
-		buf += '<table class="sprites"><tr><td><img src="' + Dex.resourcePrefix + 'sprites/ani-back/' + pokemon.spriteid + '.gif"' + hideBroken + ' /></td>';
-		buf += '<td><img src="' + Dex.resourcePrefix + 'sprites/ani-back-shiny/' + pokemon.spriteid + '.gif"' + hideBroken + ' /></td></table>';
-		buf += '<div style="clear:left"></div></li>';
+		var animated = [['gen5ani', 'Sprites animados'], ['ani', 'Sprites animados 3D']];
+		for (var i = 0; i < animated.length; i++) {
+			var dir = Dex.resourcePrefix + 'sprites/' + animated[i][0];
+			buf += '<li class="resultheader"><h3>' + animated[i][1] + '</h3></li>';
+			buf += '<li class="content"><table class="sprites"><tr><td><img src="' + dir + '/' + pokemon.spriteid + '.gif"' + hideBroken + ' /></td>';
+			buf += '<td><img src="' + dir + '-shiny/' + pokemon.spriteid + '.gif"' + hideBroken + ' /></td></table>';
+			buf += '<table class="sprites"><tr><td><img src="' + dir + '-back/' + pokemon.spriteid + '.gif"' + hideBroken + ' /></td>';
+			buf += '<td><img src="' + dir + '-back-shiny/' + pokemon.spriteid + '.gif"' + hideBroken + ' /></td></table>';
+			buf += '<div style="clear:left"></div></li>';
+		}
 
 		if (pokemon.num <= 1025) {
 			buf += '<li class="resultheader"><h3>Grito</h3></li>';
