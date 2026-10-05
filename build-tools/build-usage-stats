@@ -1,0 +1,113 @@
+#!/usr/bin/env node
+'use strict';
+
+/**
+ * Builds the usage stats from the server's battle logs
+ * (logs/<month>/<format>/<day>/*.log.json, see Config.logchallenges):
+ * for each game's usageFormats and month, how many teams use each Pokémon,
+ * and their most common moves, items, abilities and teammates.
+ *
+ * Writes data/usage/<game>/index.json and data/usage/<game>/<format>/<month>.json
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+process.chdir(path.resolve(__dirname, '..'));
+const Config = require('../config/config');
+const serverDir = path.resolve(Config.serverDir || '../pokemon-showdown');
+const logsDir = path.resolve(Config.logsDir || path.join(serverDir, 'logs'));
+const {Dex} = require(path.join(serverDir, 'dist/sim/dex'));
+const {games} = JSON.parse(fs.readFileSync('games.json', 'utf8'));
+
+const TOP = {moves: 10, items: 6, abilities: 4, teammates: 8};
+
+function readDirs(dir) {
+	try {
+		return fs.readdirSync(dir, {withFileTypes: true}).filter(e => e.isDirectory()).map(e => e.name).sort();
+	} catch {
+		return [];
+	}
+}
+
+function top(counts, total, n) {
+	return Object.entries(counts)
+		.sort((a, b) => b[1] - a[1])
+		.slice(0, n)
+		.map(([id, count]) => [id, Math.round(count / total * 10000) / 100]);
+}
+
+function monthStats(formatid, month, dex) {
+	const species = {};
+	let battles = 0;
+	let teams = 0;
+	for (const day of readDirs(path.join(logsDir, month, formatid))) {
+		const dayDir = path.join(logsDir, month, formatid, day);
+		for (const file of fs.readdirSync(dayDir)) {
+			if (!file.endsWith('.log.json')) continue;
+			let log;
+			try {
+				log = JSON.parse(fs.readFileSync(path.join(dayDir, file), 'utf8'));
+			} catch {
+				continue;
+			}
+			battles++;
+			for (const team of [log.p1team, log.p2team, log.p3team, log.p4team]) {
+				if (!Array.isArray(team) || !team.length) continue;
+				teams++;
+				const ids = [...new Set(team.map(set => dex.species.get(set.species).id).filter(Boolean))];
+				for (const set of team) {
+					const id = dex.species.get(set.species).id;
+					if (!id) continue;
+					const entry = species[id] ||= {count: 0, moves: {}, items: {}, abilities: {}, teammates: {}};
+					entry.count++;
+					for (const move of new Set((set.moves || []).map(m => dex.moves.get(m).id).filter(Boolean))) {
+						entry.moves[move] = (entry.moves[move] || 0) + 1;
+					}
+					const item = dex.items.get(set.item).id || 'nothing';
+					entry.items[item] = (entry.items[item] || 0) + 1;
+					const ability = dex.abilities.get(set.ability).id;
+					if (ability) entry.abilities[ability] = (entry.abilities[ability] || 0) + 1;
+					for (const mate of ids) {
+						if (mate !== id) entry.teammates[mate] = (entry.teammates[mate] || 0) + 1;
+					}
+				}
+			}
+		}
+	}
+	const pokemon = Object.entries(species)
+		.sort((a, b) => b[1].count - a[1].count)
+		.map(([id, entry]) => ({
+			id,
+			count: entry.count,
+			usage: Math.round(entry.count / teams * 10000) / 100,
+			moves: top(entry.moves, entry.count, TOP.moves),
+			items: top(entry.items, entry.count, TOP.items),
+			abilities: top(entry.abilities, entry.count, TOP.abilities),
+			teammates: top(entry.teammates, entry.count, TOP.teammates),
+		}));
+	return {format: formatid, month, battles, teams, pokemon};
+}
+
+for (const gameid in games) {
+	const game = games[gameid];
+	const dex = Dex.mod(game.mod);
+	const outDir = path.join('data', 'usage', gameid);
+	const index = {formats: []};
+	for (const formatid of game.usageFormats || []) {
+		const months = [];
+		for (const month of readDirs(logsDir)) {
+			if (!/^\d{4}-\d{2}$/.test(month) || !fs.existsSync(path.join(logsDir, month, formatid))) continue;
+			const stats = monthStats(formatid, month, dex);
+			if (!stats.battles) continue;
+			fs.mkdirSync(path.join(outDir, formatid), {recursive: true});
+			fs.writeFileSync(path.join(outDir, formatid, `${month}.json`), JSON.stringify(stats));
+			months.push({month, battles: stats.battles});
+		}
+		index.formats.push({id: formatid, name: Dex.formats.get(formatid).name, months: months.reverse()});
+	}
+	fs.mkdirSync(outDir, {recursive: true});
+	fs.writeFileSync(path.join(outDir, 'index.json'), JSON.stringify(index));
+	const summary = index.formats.map(f => `${f.id} ${f.months.map(m => `${m.month}:${m.battles}`).join(',') || '-'}`);
+	console.log(`data/usage/${gameid}: ${summary.join('; ')}`);
+}

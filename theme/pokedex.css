@@ -501,8 +501,7 @@ a.subtle:hover {
 	border-radius: 0;
 	cursor: pointer;
 }
-@media (max-width:520px) {
-	.header .nav {
-		padding-left: 0;
-	}
+/* no logo in the header, so no room for it */
+.header .nav {
+	padding-left: 0;
 }

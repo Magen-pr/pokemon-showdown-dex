@@ -183,7 +183,7 @@ var PokedexPokemonPanel = PokedexResultPanel.extend({
 		}
 
 		// learnset
-		buf += '<ul class="tabbar"><li><button class="button nav-first cur" value="move">Movimientos</button></li><li><button class="button nav-last" value="details">Detalles</button></li></ul>';
+		buf += '<ul class="tabbar"><li><button class="button nav-first cur" value="move">Movimientos</button></li><li><button class="button" value="details">Detalles</button></li><li><button class="button nav-last" value="usage">Uso</button></li></ul>';
 		buf += '<ul class="utilichart nokbd">';
 		buf += '</ul>';
 
@@ -231,7 +231,59 @@ var PokedexPokemonPanel = PokedexResultPanel.extend({
 		case 'details':
 			this.renderDetails();
 			break;
+		case 'usage':
+			this.renderUsage();
+			break;
 		}
+	},
+	renderUsage: function() {
+		var id = this.id;
+		var self = this;
+		this.$('.utilichart').html('<li><em>Cargando...</em></li>');
+		Usage.get('index.json').done(function (index) {
+			var formats = index.formats.filter(function (format) { return format.months.length; });
+			if (!formats.length) {
+				self.$('.utilichart').html('<li><p>Todav&iacute;a no hay estad&iacute;sticas de uso.</p></li>');
+				return;
+			}
+			var requests = formats.map(function (format) {
+				return Usage.get(format.id + '/' + format.months[0].month + '.json');
+			});
+			$.when.apply($, requests).done(function () {
+				var buf = '';
+				for (var i = 0; i < formats.length; i++) {
+					var stats = requests[i].responseJSON;
+					buf += '<li class="resultheader"><h3>' + Dex.escapeHTML(Usage.formatName(formats[i])) + ' &middot; ' + Usage.monthName(stats.month) + '</h3></li>';
+					var rank = stats.pokemon.findIndex(function (entry) { return entry.id === id; });
+					if (rank < 0) {
+						buf += '<li><p>No se ha usado en ninguno de los ' + stats.battles + ' combates de este mes.</p></li>';
+						continue;
+					}
+					var entry = stats.pokemon[rank];
+					buf += '<li><p>En el <strong>' + Usage.percent(entry.usage) + '</strong> de los equipos (puesto ' + (rank + 1) + ' de ' + stats.pokemon.length + ').</p>';
+					buf += self.renderUsageList('Movimientos', entry.moves, 'moves', Names.move);
+					buf += self.renderUsageList('Objetos', entry.items, 'items', function (item) {
+						return item === 'nothing' ? 'Sin objeto' : Names.item(item);
+					});
+					buf += self.renderUsageList('Habilidades', entry.abilities, 'abilities', Names.ability);
+					buf += self.renderUsageList('Compa&ntilde;eros', entry.teammates, 'pokemon', Names.species);
+					buf += '</li>';
+				}
+				self.$('.utilichart').html(buf);
+			});
+		}).fail(function () {
+			self.$('.utilichart').html('<li><p>Todav&iacute;a no hay estad&iacute;sticas de uso.</p></li>');
+		});
+	},
+	renderUsageList: function(title, list, path, getName) {
+		if (!list.length) return '';
+		var buf = '<dl><dt>' + title + ':</dt><dd>';
+		for (var i = 0; i < list.length; i++) {
+			var name = Dex.escapeHTML(getName(list[i][0]));
+			if (list[i][0] !== 'nothing') name = '<a href="' + Game.root + path + '/' + list[i][0] + '" data-target="push">' + name + '</a>';
+			buf += (i ? ', ' : '') + name + ' <small>' + Usage.percent(list[i][1]) + '</small>';
+		}
+		return buf + '</dd></dl>';
 	},
 	getLearnset: function(id) {
 		var species = Dex.species.get(id);

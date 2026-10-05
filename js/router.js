@@ -14,6 +14,8 @@ var Pokedex = Panels.App.extend({
 		'': PokedexSearchPanel,
 		'pokemon/': PokedexSearchPanel,
 		'moves/': PokedexSearchPanel,
+		'usage/': PokedexUsagePanel,
+		'usage/:format': PokedexUsagePanel,
 		':q': PokedexSearchPanel
 	},
 	initialize: function() {

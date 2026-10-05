@@ -29,7 +29,8 @@ var PokedexSearchPanel = Panels.Panel.extend({
 		buf += '<h1><a href="'+Game.root+'" data-target="replace">Pok&eacute;dex</a></h1>';
 		buf += '<ul class="tabbar centered" style="margin-bottom: 18px"><li><button class="button nav-first' + (fragment === '' ? ' cur' : '') + '" value="">Buscar</button></li>';
 		buf += '<li><button class="button' + (fragment === 'pokemon/' ? ' cur' : '') + '" value="pokemon/">Pok&eacute;mon</button></li>';
-		buf += '<li><button class="button nav-last' + (fragment === 'moves/' ? ' cur' : '') + '" value="moves/">Movimientos</button></li></ul>';
+		buf += '<li><button class="button' + (fragment === 'moves/' ? ' cur' : '') + '" value="moves/">Movimientos</button></li>';
+		buf += '<li><button class="button nav-last" value="usage/">Uso</button></li></ul>';
 		buf += '<div class="searchboxwrapper"><input class="textbox searchbox" type="search" name="q" value="' + Dex.escapeHTML($oldSearchbox.val() || '') + '" autocomplete="off" placeholder="Busca Pok&eacute;mon, movimientos, habilidades, objetos, tipos..." /></div>';
 		if (fragment === '') {
 			buf += '<p class="buttonbar"><button class="button"><i class="fa fa-search" aria-hidden="true"></i> <strong>Buscar en la Pok&eacute;dex</strong></button></p>';

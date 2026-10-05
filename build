@@ -15,6 +15,7 @@ const Config = require('./config/config');
 process.chdir(__dirname);
 
 child_process.execSync('node build-tools/build-game-data', {stdio: 'inherit'});
+child_process.execSync('node build-tools/build-usage-stats', {stdio: 'inherit'});
 
 const clientDir = path.resolve(Config.clientDir || '../pokemon-showdown-client', 'play.pokemonshowdown.com');
 
